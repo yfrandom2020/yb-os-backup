@@ -8,11 +8,11 @@ ASPARAMS = --32 -I./include -g
 LDPARAMS = -melf_i386
 objects = loader.o kernel.o util.o commands.o initializers.o gdt.o gdt_asm.o port.o pic.o idt.o isrs_gen.o isr.o isr_asm.o irq.o disk.o fat16.o
 all_objects = $(objects) mykernel.bin mykernel.iso
-path = /home/fridkin/Desktop/os/yb-os/objects
-src_path = /home/fridkin/Desktop/os/yb-os/src
-include_path = /home/fridkin/Desktop/os/yb-os/include
+path = /home/fridkin/Desktop/yb/objects
+src_path = /home/fridkin/Desktop/yb/src
+include_path = /home/fridkin/Desktop/yb/include
 shared_path = /mnt/hgfs/vm-shared-2
-common_path = /home/fridkin/Desktop/os/yb-os
+common_path = /home/fridkin/Desktop/yb
 
 .PHONY: all
 all:
