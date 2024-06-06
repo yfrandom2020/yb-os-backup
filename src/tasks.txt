@@ -1,0 +1,8 @@
+tasks
+FAT16
+1) Read files that are loaded previously - parsing of cluster table
+2) write to existing files
+3) create files
+4) create directories
+
+OPTIONAL: re-structure code and generalize paths
