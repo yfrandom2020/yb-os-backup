@@ -1,5 +1,5 @@
 #include <util/util.h>
-int strcmp(const char *str1, const char *str2) 
+int strcmp(uint8_t* str1, uint8_t* str2) 
 {
     // Util - Compare between two strings and return wether they are equal or not    
     while (*str1 && (*str1 == *str2)) 
@@ -7,7 +7,7 @@ int strcmp(const char *str1, const char *str2)
         str1++;
         str2++;
     }
-    return *(unsigned char *)str1 - *(unsigned char *)str2; // 0 if equal
+    return *(uint8_t *)str1 - *(uint8_t*)str2; // 0 if equal
 }
 
 

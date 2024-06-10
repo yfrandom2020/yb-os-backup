@@ -12,6 +12,7 @@
 #include "idt/isr/isrgen.h"
 #include "fat16/disk.h"
 #include "fat16/fat16.h"
+#include <util/util.h>
 
 
 #define KEYBOARD_BUFFER_SIZE 128
@@ -31,7 +32,7 @@ typedef void (*command_func_t)(void); // Pointer to a void function that takes n
 extern uint16_t* VideoMemory;
 extern uint8_t x,y;
 
-extern char command_buffer[MAX_COMMAND_LENGTH]; // Printing related - a buffer to store the characters written
+extern uint8_t command_buffer[MAX_COMMAND_LENGTH]; // Printing related - a buffer to store the characters written
 extern int command_length; // Indexer - point to the available element in buffer length
 
 bool loop_flag = true;
@@ -39,8 +40,6 @@ bool loop_flag = true;
 extern ata ata0m; // ATA PIO disk interface with the virtual hard drive created in run.sh
 
 
-void *memset(void *ptr, int value, size_t num);
-int strcmp(const char *str1, const char *str2); // From util.cpp
 
 void clear_screen();
 void help_command();
@@ -58,18 +57,18 @@ typedef struct
 {
     // This struct describes the configuration for a single command recognized by the kernel
     // Each instruction has a corresponding function that is called by the execute_command 
-    const char *name;
+    uint8_t *name;
     command_func_t func;
 } __attribute__((packed)) command_t;
 
-const command_t all_commands[MAX_COMMANDS] = // List of all available commands
+command_t all_commands[MAX_COMMANDS] = // List of all available commands
 {
-    {"clear", clear_screen},
-    {"hello", help_command},
-    {"ben dover", ben_dover},
-    {"shut down", shut_down},
-    {"up time", printDecimal},
-    {"unknown", unknown_command}
+    {(uint8_t*)"clear", clear_screen},
+    {(uint8_t*)"hello", help_command},
+    {(uint8_t*)"ben dover", ben_dover},
+    {(uint8_t*)"shut down", shut_down},
+    {(uint8_t*)"up time", printDecimal},
+    {(uint8_t*)"unknown", unknown_command}
 };
 
 void execute_command() // Called by putchar in case of \n from user. Go over the string stored in command buffer and figure out if it's valid command

@@ -31,7 +31,7 @@ void initializers()
 
     readBootSector();
 
-    //List_Entries();
+    List_Entries();
 
     Enable_interrupts();
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <types.h>
 #include <fat16/disk.h>
-#include <stddef.h>
+#include <util/util.h>
 extern ata ata0m;
 typedef struct 
 {
@@ -42,7 +42,7 @@ typedef struct
     uint8_t  BPB_NumFATs; // usually 2
     uint16_t BPB_RootEntCnt; // usually 512?
     uint16_t BPB_TotSec16; // 0
-    uint8_t  BPB_Media; // F8
+    uint8_t  BPB_Media; // F8 - to signafy sector end
     uint16_t BPB_FATSz16; // fat size - 256
     uint16_t BPB_SecPerTrk; // sectors per track
     uint16_t BPB_NumHeads;
@@ -81,9 +81,10 @@ void Read_MBR();
 void readBootSector(); // Use ata_read_sector  
 FAT16_BootSector parseBootSector(uint8_t* bootSectorBuffer); // Receive the data from previous function and parse
 void List_Entries();
-void Read_File(char* name);
+void Read_File(uint8_t* name);
 void Read_Cluster(uint16_t cluster_number, uint8_t* ptr);
 void Write_Cluster(uint16_t cluster_number, uint8_t* ptr);
+uint16_t Read_FAT_Entry(uint16_t cluster);
 
 // MBR information about our FAT16 partition
 extern uint32_t lba_start;
