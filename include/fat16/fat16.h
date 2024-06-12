@@ -76,6 +76,14 @@ typedef struct
 } __attribute__((packed)) DirectoryEntry;
 
 
+typedef struct
+{
+    uint8_t name[9]; // Including terminator character
+    uint16_t firstClusterLow;
+    uint32_t size;
+} __attribute__((packed)) helper_entry_struct; // Will be used to save values of name and first cluster low for each directory entry
+
+
 
 void Read_MBR();
 void readBootSector(); // Use ata_read_sector  

@@ -21,8 +21,8 @@ if [ ! -e "dependancies/os-disk.raw" ]; then
 
     # Add a text file to the partition
     echo "This is a test file" | sudo tee /mnt/os-disk/TESTFILE.txt
-    #echo "This is a test file 2" | sudo tee /mnt/os-disk/TESTFILD.txt
-    #echo "This is a test file 3" | sudo tee /mnt/os-disk/TESTFILV.txt
+    echo "This is a test file 2" | sudo tee /mnt/os-disk/TESTFILD.txt
+    echo "This is a test file 3" | sudo tee /mnt/os-disk/TESTFILV.txt
 
     # Unmount the partition and disconnect the loop device
     sudo umount /mnt/os-disk

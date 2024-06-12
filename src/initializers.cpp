@@ -33,5 +33,7 @@ void initializers()
 
     List_Entries();
 
+    //test_disk();
+
     Enable_interrupts();
 }

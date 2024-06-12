@@ -13,3 +13,4 @@ void ata_initialize();
 void Init_ext();
 extern ata ata0m;
 extern uint8_t* up_message;
+void test_disk();

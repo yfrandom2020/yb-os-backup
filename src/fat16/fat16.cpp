@@ -74,7 +74,7 @@ void readBootSector()
     
     number_of_FATs = boot_sector.BPB_NumFATs; // 2
     
-    root_entries = boot_sector.BPB_RootEntCnt; // 512 entries where each is 32 bit
+    root_entries = boot_sector.BPB_RootEntCnt; // 512 entries where each is 32 bit = 0x200
     
     total_sectors = boot_sector.BPB_TotSec16; // 0
     
@@ -83,7 +83,7 @@ void readBootSector()
         total_sectors = boot_sector.BPB_TotSec32;
     }
     
-    sectors_per_FAT = boot_sector.BPB_FATSz16; // Sectors per fat - there are 2 of them. size is 256 
+    sectors_per_FAT = boot_sector.BPB_FATSz16; // 256 = 0x100
     
     fat_start_sector = lba_start + reserved_sectors; // 0x800 + 0x10 = 0x810
 
@@ -91,11 +91,14 @@ void readBootSector()
    // Actual fat begins two clusters (32 sectors) after fat_start_sector
 
 
-    root_dir_start_sector = fat_start_sector + (number_of_FATs * sectors_per_FAT); // Sector 0xA10 which is 0x142000 real address
+    root_dir_start_sector = fat_start_sector + (number_of_FATs * sectors_per_FAT); // Sector 0xA10 which is 0x142000 real address - correct
     
-    root_directory_sectors = 2*(((root_entries * 32) + (bytes_per_sector - 1)) / bytes_per_sector); // Size of root directory - 64 sectors
+    root_directory_sectors = ((root_entries * 32) + (bytes_per_sector - 1)) / bytes_per_sector; // Size of root directory - 32 sectors = 0x20
     
-    first_data_sector = root_dir_start_sector + root_directory_sectors; // We should be getting 0xA40 - 0x148000
+    first_data_sector = root_dir_start_sector + root_directory_sectors; // We should be getting 0xA30 - 0x146000
+    // We need to remember that although the actual data sector begins in 0x146000 the first two clusters are reserved so we need to add 
+    // We start from sector 3 instead of sector 2? for no apparent reason - FAT decides to save our first file in the 3rd sector instead of second...
+    first_data_sector += 0x10;
     
     total_clusters = (total_sectors - first_data_sector) / sectors_per_cluster;
 
@@ -113,7 +116,9 @@ void Read_Cluster(uint16_t cluster_number, uint8_t* ptr)
 {
     // This function will connect between the read/write interface of sectors to the read/write of clusters
     // We will set ptr in advance, instead of inside function
-    uint32_t start_sector = sectors_per_cluster * (cluster_number - 1);
+    // The sector number given is actually only a sector in the data region
+    // For some reason our files begin in sector 3 instead of sector two
+    uint32_t start_sector = first_data_sector + ((cluster_number - 3) * sectors_per_cluster);
     for (int i = 0; i < sectors_per_cluster; i++) 
     {
         ata0m.Read28(start_sector + i, bytes_per_sector, (uint8_t*)&ptr[i*bytes_per_sector]); // Read the 512 of the sector into the array, move the pointer of the array according to i
@@ -124,7 +129,7 @@ void Write_Cluster(uint16_t cluster_number, uint8_t* ptr)
 {
     // This function will connect between the read/write interface of sectors to the read/write of clusters
     // We will set ptr in advance, instead of inside function
-    uint32_t start_sector = sectors_per_cluster * (cluster_number - 1);
+    uint32_t start_sector =  first_data_sector + (cluster_number - 3);
     for (int i = 0; i < sectors_per_cluster; i++) 
     {
         ata0m.Write28(start_sector + i, (uint8_t*)&ptr[i*bytes_per_sector], bytes_per_sector); // Read the 512 of the sector into the array, move the pointer of the array according to i
@@ -132,14 +137,36 @@ void Write_Cluster(uint16_t cluster_number, uint8_t* ptr)
     }
 }
 
-uint8_t** file_names()
+void test_disk()
+{
+    // Test read and write cluster functions
+    printf((uint8_t*)"entereed here \n",0);
+    uint8_t ptr[bytes_per_sector * sectors_per_cluster]; // Size of one cluster exactly
+    for (int i = 0; i < bytes_per_sector * sectors_per_cluster; i++)
+    {
+        ptr[i] = 'A';
+        if (i==512) ptr[i] = 'C';
+    }
+
+    Write_Cluster(3, ptr);
+
+    uint8_t ptr2[bytes_per_sector * sectors_per_cluster];
+
+    Read_Cluster(3, ptr2);
+
+    printf(ptr2,0);
+
+    printf((uint8_t*)"ended successfuly \n",0);
+}
+
+helper_entry_struct* file_names()
 {
     // Get array of file names from the root directory for now
 
     static DirectoryEntry entries[16]; // Assuming 16 entries per sector
     ata0m.Read28(root_dir_start_sector, sizeof(entries), (uint8_t*)&entries);
 
-    static uint8_t* filenames[256];
+    static helper_entry_struct filenames[256]; // An array of 256 helper_entry_struct
     static uint8_t names_buffer[256][9]; // Buffer to hold up to 256 filenames, each up to 8 characters + null terminator
     int l = 0;
 
@@ -148,7 +175,6 @@ uint8_t** file_names()
         if (entries[i].name[0] == 0x00)
         {
             // No more entries, exit loop
-            filenames[l] = nullptr;
             break;
         }
         else if (entries[i].name[0] == 0xE5)
@@ -172,9 +198,17 @@ uint8_t** file_names()
         }
         names_buffer[l][k] = '\0'; // Null-terminate the string
 
-        filenames[l] = names_buffer[l];
+        // Copy the file name to the helper_entry_struct
+        for (int j = 0; j < 9; j++) {
+            filenames[l].name[j] = names_buffer[l][j];
+        }
+        filenames[l].firstClusterLow = entries[i].firstClusterLow;
+        filenames[l].size = entries[i].fileSize;
+
         l++;
     }
+
+    // Return the array of structs
     return filenames;
 }
 
@@ -253,26 +287,36 @@ void Read_File(uint8_t* name)
     
     DirectoryEntry entries[16];
     //ata0m.Read28(root_dir_start_sector, 16*sizeof(DirectoryEntry), (uint8_t*)&entries);
-    
+    printf((uint8_t*)"Inside read file \n",0);
     printf(name,0);
-    printf((uint8_t*)"\n",0);
-    printf((uint8_t*)"inspecting \n",0);
 
-    uint8_t** filenames = file_names(); // index zero of array of names
+    helper_entry_struct* filenames = file_names(); // Index zero of array of names - values returned are names of things in entries
 
     for (int i = 0; i < 16; i++)
     {
-        if (strcmp(name, filenames[i]) == 0)
+        if (strcmp(name, filenames[i].name) == 0)
         {
+            printf((uint8_t*)"Found file in lists \n",0);
+
                        
-            uint16_t cluster = entries[i].firstClusterLow;
-            uint32_t file_size = entries[i].fileSize;
-            uint8_t buffer[8192]; // Assume maximum file size of 8KB for simplicity
+            uint16_t cluster = filenames[i].firstClusterLow; 
+            uint32_t file_size = filenames[i].size; // Parsed data correctly in example cluster is 0x3 and size is 0x14 (20)
+            uint8_t buffer[bytes_per_sector * sectors_per_cluster]; // Assume maximum file size of 8KB for simplicity
+            for (int k = 0; k < bytes_per_sector * sectors_per_cluster; k++)
+            {
+                buffer[k] = ' ';
+            }
             uint32_t bytes_read = 0;
+
+            printf((uint8_t*)"cluster number: \n",0);
+            printfHex16(cluster);
+
+            printf((uint8_t*)"file size: \n",0);
+            printfHex32(file_size);
+
             while (cluster < 0xFFF8 && bytes_read < file_size) 
             {
-                printf((uint8_t*)"entered \n",0);
-                Read_Cluster(cluster, (uint8_t*)buffer[bytes_read]);
+                Read_Cluster(cluster, &buffer[bytes_read]); // Read works
                 bytes_read += sectors_per_cluster * bytes_per_sector;
                 cluster = Read_FAT_Entry(cluster);
             }
