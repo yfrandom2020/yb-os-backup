@@ -10,6 +10,7 @@ void printfHex(uint8_t key);
 #define WHITE_ON_BLACK 0x0F
 #define MAX_COMMAND_LENGTH 128
 #define MAX_COMMANDS 10
+#define TIMER_FREQUENCY 18 // Usually this value on x86 
 
 extern uint8_t x,y;
 extern uint8_t up_time;
@@ -79,14 +80,14 @@ void printDecimal()
 void uptime()
 {
     printf((uint8_t*)"the OS is up for: ",0);
-    printfHex(up_time / 10);
+    printfHex(up_time / TIMER_FREQUENCY);
     printf((uint8_t*)" seconds \n",0);
     printf((uint8_t*)">",0);
 }
 
 void ben_dover()
 {
-    printf((uint8_t*)"sapoj cutie \n",0);
+    printf((uint8_t*)"sapoj noice \n",0);
     printf((uint8_t*)">", 0);  
 }
 

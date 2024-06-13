@@ -14,3 +14,4 @@ void Init_ext();
 extern ata ata0m;
 extern uint8_t* up_message;
 void test_disk();
+void Write_File(uint8_t* name, uint8_t* data, uint32_t data_size);

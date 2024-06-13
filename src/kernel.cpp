@@ -15,11 +15,6 @@ int command_length = 0;
 ata ata0m(true, 0x1F0);
 
 
-
-
-// Extern "C" means that when compiling the source code, the name of the function will not be changed by the compiler
-// This is done in order to call function from other files, and making sure that the names are saved
-
 // Conventions
 typedef void (*constructor)();
 extern "C" constructor start_ctors;
@@ -34,7 +29,6 @@ extern "C" void kernelMain(void* multiboot_structure, uint32_t magicnumber)
 {
     // This is the kernelMain function - the main function of the kernel and the os
     // This function is the first to run and is the one called from the loader.s file
-    // This simply calls initalizers and then enters a never ending loop
     
     initializers(); // In order: clear, gdt, idt, isr, irq, pic, ata, mbr, vbr
 
@@ -42,6 +36,7 @@ extern "C" void kernelMain(void* multiboot_structure, uint32_t magicnumber)
     for (int i = 0; i < 10; i++)
     {
         i--;
+        while(1);
     }
 }
 

@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# Bash script to 1) Create hard disk 2) execute code
 DEPENDENCIES_DIR="./dependencies"
 DISK_FILE="os-disk.raw"
 DISK_PATH="$DEPENDENCIES_DIR/$DISK_FILE"

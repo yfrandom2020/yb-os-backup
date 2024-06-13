@@ -31,9 +31,11 @@ void initializers()
 
     readBootSector();
 
+    Write_File((uint8_t*)"TESTING.txt",(uint8_t*)"aaaaaccvcccccccccccccccccc",27);
+    
     List_Entries();
 
-    //test_disk();
+    
 
     Enable_interrupts();
 }

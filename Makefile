@@ -100,6 +100,9 @@ mykernel.bin: src/linker.ld $(objects)
 install: mykernel.bin
 	sudo cp $< /boot/mykernel.bin
 
+.PHONY: test
+test:
+	bash scripts/test.sh
 
 # General instruction to create an ISO file using the GRUB menu  
 mykernel.iso: mykernel.bin
@@ -126,6 +129,9 @@ clean:
 	@cd $(path) && \
 	rm -f $(objects) mykernel.bin mykernel.iso
 	rm -f $(shared_path)/mykernel.iso
+	rm -f /home/fridkin/Desktop/yb/dependancies/os-disk.raw
+	rm -f /home/fridkin/Desktop/yb/test/test.raw
+
 
 .PHONY: second_clean
 second_clean:

@@ -3,6 +3,9 @@
 #include <fat16/disk.h>
 #include <util/util.h>
 extern ata ata0m;
+
+/*------------------------------------------------------------------------------------------------------------*/ 
+// Structs definitions
 typedef struct 
 {
     // The mbr contains three different parts
@@ -83,16 +86,26 @@ typedef struct
     uint32_t size;
 } __attribute__((packed)) helper_entry_struct; // Will be used to save values of name and first cluster low for each directory entry
 
-
+/*-------------------------------------------------------------------------------------------------------------------------------------*/
 
 void Read_MBR();
-void readBootSector(); // Use ata_read_sector  
-FAT16_BootSector parseBootSector(uint8_t* bootSectorBuffer); // Receive the data from previous function and parse
-void List_Entries();
-void Read_File(uint8_t* name);
+void readBootSector(); // Data parsing functions 
+
 void Read_Cluster(uint16_t cluster_number, uint8_t* ptr);
-void Write_Cluster(uint16_t cluster_number, uint8_t* ptr);
-uint16_t Read_FAT_Entry(uint16_t cluster);
+void Write_Cluster(uint16_t cluster_number, uint8_t* ptr); // General utility functions
+
+FAT16_BootSector parseBootSector(uint8_t* bootSectorBuffer); // Not in use anymore
+
+
+void* memset(void *ptr, int value, size_t num); // Util
+void List_Entries(); // POC of read file function
+
+uint16_t Read_FAT_Entry(uint16_t cluster); // Parse FAT
+
+void Read_File(uint8_t* name);
+void Write_File(uint8_t* name, uint8_t* data); // Main functionality
+
+/*---------------------------------------------------------------------------------------------------*/
 
 // MBR information about our FAT16 partition
 extern uint32_t lba_start;
@@ -107,11 +120,11 @@ extern uint8_t number_of_FATs;
 extern uint16_t root_entries;
 extern uint16_t total_sectors;
 
-
 extern uint16_t sectors_per_FAT;
 extern uint32_t root_directory_sectors;
 extern uint32_t first_data_sector;
 extern uint32_t total_clusters;
+
 // Calculate the starting sector of the FAT and root directory
 extern uint32_t fat_start_sector;
 extern uint32_t root_dir_start_sector;
@@ -120,6 +133,9 @@ extern uint16_t sectors_per_FAT;
 extern uint32_t root_directory_sectors;
 extern uint32_t first_data_sector;
 extern uint32_t total_clusters;
+
 // Calculate the starting sector of the FAT and root directory
 extern uint32_t fat_start_sector;
 extern uint32_t root_dir_start_sector;
+
+/*----------------------------------------------------------------------------------------------------------*/
