@@ -31,11 +31,10 @@ void initializers()
 
     readBootSector();
 
-    Write_File((uint8_t*)"TESTING.txt",(uint8_t*)"aaaaaccvcccccccccccccccccc",27);
+    //Write_File((uint8_t*)"TESTING.txt",(uint8_t*)"aaaaaccvcccccccccccccccccc \n",27);
     
-    List_Entries();
+    //List_Entries();
 
-    
 
     Enable_interrupts();
 }

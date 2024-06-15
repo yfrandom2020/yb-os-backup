@@ -13,25 +13,31 @@ char command_buffer[MAX_COMMAND_LENGTH];
 extern int command_length;
 extern uint16_t* VideoMemory;
 void putchar(char c, int flag);
+int shift_pressed = 0;
 
-
-uint8_t scancode_to_ascii(uint8_t scancode) {
-    // Extended scan code to ASCII conversion table for alphanumeric and common symbols
-    
+uint8_t scancode_to_ascii(uint8_t scancode, int shift_pressed) {
     static const char scancode_table[128] = {
         0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',  // 0x00 - 0x0F
         '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',   // 0x10 - 0x1C
         0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0,       // 0x1D - 0x29
         '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0, '*', 0,       // 0x2A - 0x35
-        ' ', 0,  // 0x36 - 0x37 (Space at 0x39)
-        '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b', '\t',  // 0x38 - 0x44
-        'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',        // 0x45 - 0x51
-        0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 0,       // 0x52 - 0x5E
-        '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0,                // 0x5F - 0x6A
+        ' ', 0  // 0x36 - 0x37 (Space at 0x39)
+    };
+
+    static const char scancode_table_shifted[128] = {
+        0,  27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',  // 0x00 - 0x0F
+        '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',   // 0x10 - 0x1C
+        0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 0,        // 0x1D - 0x29
+        '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0, '*', 0,        // 0x2A - 0x35
+        ' ', 0  // 0x36 - 0x37 (Space at 0x39)
     };
 
     if (scancode < 128) {
-        return scancode_table[scancode];
+        if (shift_pressed) {
+            return scancode_table_shifted[scancode];
+        } else {
+            return scancode_table[scancode];
+        }
     }
     return 0;
 }
@@ -41,37 +47,56 @@ void Keyboard(Registers* state)
 {
     // Keyboard ISR
     uint8_t data = keyboard_port.Read();
-    data = scancode_to_ascii(data);
-    
-    if (data == '\b') 
+
+    if (data == 0x2A || data == 0x36) 
     {
-        // Handle backspace
-        if (command_length > 0) 
+
+        // Left or Right Shift pressed
+        shift_pressed = 1;
+    } 
+    else if (data == 0xAA || data == 0xB6) 
+    {
+        // Left or Right Shift released
+        shift_pressed = 0;
+    } 
+    else 
+    {
+        // Convert scancode to ASCII
+        data = scancode_to_ascii(data, shift_pressed);
+        static int flag = 0;
+
+        if (data == '\b') 
         {
-            if (x > 1 || (x == 1 && y > 0)) 
-            { // Ensure '>' is not deleted
-                if (x == 0 && y > 0) 
-                {
-                    // Move to the end of the previous line
-                    y--;
-                    x = SCREEN_WIDTH - 1;
-                } 
-                else if (x > 0) 
-                {
-                    x--;
+            // Handle backspace
+            if (command_length > 0) 
+            {
+                if (x > 1 || (x == 1 && y > 0)) 
+                { // Ensure '>' is not deleted
+                    if (x == 0 && y > 0) 
+                    {
+                        // Move to the end of the previous line
+                        y--;
+                        x = SCREEN_WIDTH - 1;
+                    } 
+                    else if (x > 0) 
+                    {
+                        x--;
+                    }
+                    // Clear the character from the screen and command buffer
+                    VideoMemory[y * SCREEN_WIDTH + x] = (WHITE_ON_BLACK << 8) | ' ';
+                    command_length--;
+                    command_buffer[command_length] = '\0';
                 }
-                // Clear the character from the screen and command buffer
-                VideoMemory[y * SCREEN_WIDTH + x] = (WHITE_ON_BLACK << 8) | ' ';
-                command_length--;
-                command_buffer[command_length] = '\0';
             }
+        } 
+        else 
+        {
+            char buffer[2] = {static_cast<char>(data), '\0'};
+            printf((uint8_t*)buffer, 1); // Print character
         }
-    } else 
-    {
-        char buffer[2] = {static_cast<char>(data), '\0'};
-        printf((uint8_t*)buffer, 1); // Print character
+
+       
     }
-    
     PIC_sendEOI(state->interrupt - PIC1); // Number of IRQ
 }
 

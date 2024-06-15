@@ -96,7 +96,7 @@ void Write_Cluster(uint16_t cluster_number, uint8_t* ptr); // General utility fu
 
 FAT16_BootSector parseBootSector(uint8_t* bootSectorBuffer); // Not in use anymore
 
-
+helper_entry_struct* file_names();
 void* memset(void *ptr, int value, size_t num); // Util
 void List_Entries(); // POC of read file function
 

@@ -63,6 +63,8 @@ all:
 
 	bash scripts/run.sh
 
+	bash scripts/test.sh # Test operations
+
 # General instruction to compile c++ files using g++ (gnu c++ compiler) and the compilation flags defined earlier
 %.o: %.cpp
 	g++ $(GPPPARAMS) -o $@ -c $<

@@ -48,6 +48,8 @@ void unknown_command();
 void ben_dover();
 void shut_down();
 void uptime(); // Declare commands - implemnted in kernel.cpp
+void ls();
+void Read(uint8_t* file_name);
 
 void printf(uint8_t* ptr, int flag);
 void printfHex16(uint16_t key);
@@ -68,6 +70,7 @@ command_t all_commands[MAX_COMMANDS] = // List of all available commands
     {(uint8_t*)"ben dover", ben_dover},
     {(uint8_t*)"shut down", shut_down},
     {(uint8_t*)"up time", printDecimal},
+    {(uint8_t*)"ls",ls},
     {(uint8_t*)"unknown", unknown_command}
 };
 
@@ -75,6 +78,8 @@ void execute_command() // Called by putchar in case of \n from user. Go over the
 {
     command_buffer[command_length] = '\0'; // Add a terminator at the end
     int found = 0;
+
+
 
     for (int i = 0; i < MAX_COMMANDS; i++) 
     {
@@ -85,6 +90,12 @@ void execute_command() // Called by putchar in case of \n from user. Go over the
             command_length = 0;
             break;
         }
+    }
+
+    if (check_partial((uint8_t*)"read", (uint8_t*)command_buffer))
+    {
+        found = 1;
+        Read(check_partial((uint8_t*)"read", (uint8_t*)command_buffer));
     }
 
     if (!found) unknown_command();

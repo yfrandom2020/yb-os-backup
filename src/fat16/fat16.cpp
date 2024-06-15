@@ -252,16 +252,15 @@ void List_Entries()
         }
         filename[k] = '\0'; // Null-terminate the string
         //printf((uint8_t*)"The file name is: \n",0);
-        printf(only_name, 0);
+        
         if (only_name[2] != '\0' && only_name[2] != ' ')
         {
             //printf((uint8_t*)"\n sending",0);
             //printf((uint8_t*)"\n",0);
-            Read_File(only_name);
+            printf(only_name, 0);
+            printf((uint8_t*)" ",0);
+            //Read_File(only_name);
         }
-        printf((uint8_t*)"\n",0);
-
-        uint32_t cluster = ((uint32_t)entries[i].firstClusterHigh << 16) | (uint32_t)entries[i].firstClusterLow;
 
     }
 }
@@ -307,8 +306,6 @@ void Read_File(uint8_t* name)
     
     DirectoryEntry entries[16];
     //printf((uint8_t*)"Inside read file \n",0);
-    printf(name,0);
-    printf((uint8_t*)"\n",0);
 
     helper_entry_struct* filenames = file_names(); // Index zero of array of names - values returned are names of things in entries
 
@@ -397,7 +394,7 @@ void Write_File(uint8_t* name, uint8_t* data, uint32_t data_size)
     
     // Step 1: Calculate the number of clusters needed
     uint16_t clusters_needed = (data_size + (bytes_per_sector * sectors_per_cluster - 1)) / (bytes_per_sector * sectors_per_cluster);
-    if (clusters_needed == 1) printf((uint8_t*)"yepyepyep \n",0);
+    //if (clusters_needed == 1) printf((uint8_t*)"yepyepyep \n",0);
     
     // Step 2: Find available clusters
     uint16_t clusters[clusters_needed];

@@ -1,5 +1,5 @@
 # Reconnect the loop device
-loop_device=$(sudo losetup -fP --show os-disk.raw)
+loop_device=$(sudo losetup -fP --show dependancies/os-disk.raw)
 
 # Create a new directory for mounting the FAT16 partition
 mount_point="/mnt/new-os-disk"
@@ -13,7 +13,7 @@ cd ${mount_point}
 ls -l
 
 # Optional: View the content of a specific file
-cat TESTFILE.txt
+cat TESTING.txt
 
 # Unmount the partition and disconnect the loop device
 sudo umount ${mount_point}

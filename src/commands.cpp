@@ -1,7 +1,11 @@
 #include <types.h>
 #include <port/port.h>
+#include <fat16/fat16.h>
 void printf(uint8_t* a, int flag);
 void printfHex(uint8_t key);
+void List_Entries(); // POC of read file function
+void Read_File(uint8_t* name);
+void Write_File(uint8_t* name, uint8_t* data); // Main functionality
 
 #define KEYBOARD_BUFFER_SIZE 128
 #define VIDEO_MEMORY_ADDRESS 0xb8000 // Special address in RAM that when written to prints on screen
@@ -109,4 +113,36 @@ void unknown_command()
 {
     printf((uint8_t*)"error \n", 0);
     printf((uint8_t*)">", 0);  
+}
+
+void ls()
+{
+    // List entries
+    List_Entries();
+    printf((uint8_t*)"\n",0);
+    printf((uint8_t*)">",0);
+}
+
+void Read(uint8_t* file_name)
+{
+    helper_entry_struct* filenames = file_names();
+    int flag = 0; // Starting at false value, when match detected we set to true
+    for (int i = 0; i < 16; i++)
+    {
+        if (strcmp(file_name, filenames[i].name) == 0)
+        {
+            flag = 1;
+        }
+    }
+
+    if (flag == 0)
+    {
+        printf((uint8_t*)"Error: File not found \n",0);
+        printf((uint8_t*)">",0);
+        return;
+    }
+        
+    printf((uint8_t*)"printing file data: \n", 0);
+    Read_File(file_name);
+    printf((uint8_t*)">",0);
 }
