@@ -17,3 +17,4 @@ extern uint8_t* up_message;
 void test_disk();
 void Write_File(uint8_t* name, uint8_t* data, uint32_t data_size);
 void printfHex16(uint16_t key);
+void initialize_write_buffer();

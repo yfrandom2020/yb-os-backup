@@ -38,8 +38,11 @@ extern int command_length; // Indexer - point to the available element in buffer
 bool loop_flag = true;
 
 extern ata ata0m; // ATA PIO disk interface with the virtual hard drive created in run.sh
+extern int write_state; // Special variable to determine whether action taken in write to file 
 
-
+uint8_t write_file_buffer[2000];
+uint16_t write_file_buffer_index;
+extern volatile bool newline_received;
 
 void clear_screen();
 void help_command();
@@ -50,6 +53,7 @@ void shut_down();
 void uptime(); // Declare commands - implemnted in kernel.cpp
 void ls();
 void Read(uint8_t* file_name);
+void Write(uint8_t* file_name);
 
 void printf(uint8_t* ptr, int flag);
 void printfHex16(uint16_t key);
@@ -74,6 +78,17 @@ command_t all_commands[MAX_COMMANDS] = // List of all available commands
     {(uint8_t*)"unknown", unknown_command}
 };
 
+
+void initialize_write_buffer()
+{
+    write_file_buffer_index = 0;
+    for (int i = 0; i < 2000; i++)
+    {
+        write_file_buffer[i] = '\0';
+    }
+    return;
+}
+
 void execute_command() // Called by putchar in case of \n from user. Go over the string stored in command buffer and figure out if it's valid command
 {
     command_buffer[command_length] = '\0'; // Add a terminator at the end
@@ -96,6 +111,12 @@ void execute_command() // Called by putchar in case of \n from user. Go over the
     {
         found = 1;
         Read(check_partial((uint8_t*)"read", (uint8_t*)command_buffer));
+    }
+
+    if (check_partial((uint8_t*)"write", (uint8_t*)command_buffer))
+    {
+        found = 1;
+        Write(check_partial((uint8_t*)"write", (uint8_t*)command_buffer));
     }
 
     if (!found) unknown_command();

@@ -29,13 +29,13 @@ if [ ! -e "dependancies/os-disk.raw" ]; then
     # Unmount the partition and disconnect the loop device
     sudo umount /mnt/os-disk
     #-------------------------------------------- # mounting and adding file. /mnt enables to treat the disk image as actual hard drive and add files and folders to it.
-    sudo dd if=/dev/loop0 bs=512 count=1 | hexdump -C
+    #sudo dd if=/dev/loop0 bs=512 count=1 | hexdump -C
     sudo losetup -d ${loop_device} # disconnect mount
     sudo mv os-disk.raw dependancies/ 
     sudo cp dependancies/os-disk.raw test/test.raw
 fi
 
 # Run qemu-system-i386 with mykernel.iso and os-disk.qcow2
-sudo hexdump -C dependancies/os-disk.raw
+#sudo hexdump -C dependancies/os-disk.raw
 /usr/bin/qemu-system-i386 -cdrom ./objects/mykernel.iso -drive file=dependancies/os-disk.raw,format=raw,cache=none -boot d -m 512 -no-reboot -no-shutdown -M smm=off -s
 

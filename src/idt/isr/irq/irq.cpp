@@ -14,9 +14,13 @@ extern int command_length;
 extern uint16_t* VideoMemory;
 void putchar(char c, int flag);
 int shift_pressed = 0;
+volatile bool newline_received = false;
+int write_state = 0;
 
-uint8_t scancode_to_ascii(uint8_t scancode, int shift_pressed) {
-    static const char scancode_table[128] = {
+uint8_t scancode_to_ascii(uint8_t scancode, int shift_pressed) 
+{
+    static const char scancode_table[128] = 
+    {
         0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',  // 0x00 - 0x0F
         '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',   // 0x10 - 0x1C
         0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0,       // 0x1D - 0x29
@@ -24,7 +28,8 @@ uint8_t scancode_to_ascii(uint8_t scancode, int shift_pressed) {
         ' ', 0  // 0x36 - 0x37 (Space at 0x39)
     };
 
-    static const char scancode_table_shifted[128] = {
+    static const char scancode_table_shifted[128] = 
+    {
         0,  27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',  // 0x00 - 0x0F
         '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',   // 0x10 - 0x1C
         0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 0,        // 0x1D - 0x29
@@ -63,12 +68,11 @@ void Keyboard(Registers* state)
     {
         // Convert scancode to ASCII
         data = scancode_to_ascii(data, shift_pressed);
-        static int flag = 0;
 
         if (data == '\b') 
         {
             // Handle backspace
-            if (command_length > 0) 
+            if (command_length > 0 || write_file_buffer_index > 0) 
             {
                 if (x > 1 || (x == 1 && y > 0)) 
                 { // Ensure '>' is not deleted
@@ -84,15 +88,40 @@ void Keyboard(Registers* state)
                     }
                     // Clear the character from the screen and command buffer
                     VideoMemory[y * SCREEN_WIDTH + x] = (WHITE_ON_BLACK << 8) | ' ';
-                    command_length--;
-                    command_buffer[command_length] = '\0';
+                    if (write_state == 1)
+                    {
+                        write_file_buffer_index--;
+                        write_file_buffer[write_file_buffer_index] = '\0';
+                    }
+
+                    else
+                    {
+                        command_length--;
+                        command_buffer[command_length] = '\0';
+                    }
                 }
             }
         } 
         else 
         {
-            char buffer[2] = {static_cast<char>(data), '\0'};
-            printf((uint8_t*)buffer, 1); // Print character
+            if (write_state == 1)
+            {
+                printf((uint8_t*)"Current data \n",0);
+                printf(&data,0);
+                // This is the state user is inputting data for the file that is creating
+                char buffer[2] = {static_cast<char>(data), '\0'};
+                printf((uint8_t*)buffer, 0); // Print character
+                write_file_buffer[write_file_buffer_index] = buffer[0];
+                write_file_buffer_index++;
+                if (data == '\n') newline_received = true;
+
+            }
+            
+            else
+            {
+                char buffer[2] = {static_cast<char>(data), '\0'};
+                printf((uint8_t*)buffer, 1); // Print character
+            }
         }
 
        

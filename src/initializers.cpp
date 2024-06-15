@@ -9,6 +9,8 @@ void initializers()
     // 4) Re - enable interrupts
     // 5) Initialize the disk
 
+    initialize_write_buffer();
+
     clear_screen();
 
     printf(up_message,0);

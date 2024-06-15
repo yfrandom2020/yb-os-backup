@@ -1,11 +1,14 @@
 #include <types.h>
 #include <port/port.h>
 #include <fat16/fat16.h>
+#include <idt/isr/irq/irq.h>
 void printf(uint8_t* a, int flag);
 void printfHex(uint8_t key);
 void List_Entries(); // POC of read file function
 void Read_File(uint8_t* name);
-void Write_File(uint8_t* name, uint8_t* data); // Main functionality
+void Write_File(uint8_t* name, uint8_t* data, uint32_t data_size);
+void initialize_write_buffer();
+
 
 #define KEYBOARD_BUFFER_SIZE 128
 #define VIDEO_MEMORY_ADDRESS 0xb8000 // Special address in RAM that when written to prints on screen
@@ -19,9 +22,13 @@ void Write_File(uint8_t* name, uint8_t* data); // Main functionality
 extern uint8_t x,y;
 extern uint8_t up_time;
 extern uint16_t* VideoMemory;
-
+extern int write_state;
 extern char command_buffer[MAX_COMMAND_LENGTH]; // Printing related - a buffer to store the characters written
 extern int command_length;
+
+extern uint8_t write_file_buffer[2000];
+extern uint16_t write_file_buffer_index;
+extern volatile bool newline_received;
 // A file containing only the functions that are called by user when input
 void clear_screen() 
 {
@@ -111,7 +118,7 @@ void help_command()
 
 void unknown_command() 
 {
-    printf((uint8_t*)"error \n", 0);
+    printf((uint8_t*)"Error: command not recognized \n", 0);
     printf((uint8_t*)">", 0);  
 }
 
@@ -146,3 +153,24 @@ void Read(uint8_t* file_name)
     Read_File(file_name);
     printf((uint8_t*)">",0);
 }
+
+void Write(uint8_t* file_name)
+{
+    // User has used the write command
+    // Activate global variable
+    write_state = 1;
+    printf((uint8_t*)"Before entering loop \n",0);
+    while (!newline_received)
+    {
+        Keyboard(nullptr);
+    }
+    // Now the user has used the enter key
+    write_state = 0;
+    newline_received = false;
+    Write_File(file_name,write_file_buffer, write_file_buffer_index + 1);
+    initialize_write_buffer();
+    printf((uint8_t*)"Write operation successful! \n",0);
+    printf((uint8_t*)">",0);
+    return;
+}
+
