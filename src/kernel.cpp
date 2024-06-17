@@ -32,7 +32,6 @@ extern "C" void kernelMain(void* multiboot_structure, uint32_t magicnumber)
     
     initializers(); // In order: clear, gdt, idt, isr, irq, pic, ata, mbr, vbr
 
-
     for (int i = 0; i < 10; i++)
     {
         i--;

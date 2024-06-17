@@ -2,12 +2,26 @@
 #include <port/port.h>
 #include <fat16/fat16.h>
 #include <idt/isr/irq/irq.h>
+// typedef struct
+// {
+//     // A useful struct that is used to represnt the values of the registers when pushed into the stack
+//     // The general ISR_Handler receives a struct of this type and using the values inside it, it deciphers which ISR was called
+
+//     uint32_t ds;                                            // data segment pushed by us
+//     uint32_t edi, esi, ebp, useless, ebx, edx, ecx, eax;    // pusha
+//     uint32_t interrupt, error;                              // we push interrupt, error is pushed automatically (or dummy)
+//     uint32_t eip, cs, eflags, esp, ss;                      // pushed automatically by CPU
+// } __attribute__((packed)) Registers;
+
+Registers empty_struct = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 void printf(uint8_t* a, int flag);
 void printfHex(uint8_t key);
 void List_Entries(); // POC of read file function
 void Read_File(uint8_t* name);
 void Write_File(uint8_t* name, uint8_t* data, uint32_t data_size);
 void initialize_write_buffer();
+extern "C" void Enable_interrupts();
+void Keyboard(Registers* state);
 
 
 #define KEYBOARD_BUFFER_SIZE 128
@@ -22,13 +36,20 @@ void initialize_write_buffer();
 extern uint8_t x,y;
 extern uint8_t up_time;
 extern uint16_t* VideoMemory;
-extern int write_state;
+
 extern char command_buffer[MAX_COMMAND_LENGTH]; // Printing related - a buffer to store the characters written
 extern int command_length;
 
-extern uint8_t write_file_buffer[2000];
-extern uint16_t write_file_buffer_index;
-extern volatile bool newline_received;
+extern uint8_t* help;
+
+
+// These variables are extern and are defined in kernel.h
+// extern uint8_t write_file_buffer[2000];
+// extern uint16_t write_file_buffer_index;
+// extern bool newline_received;
+// extern int write_state;
+
+
 // A file containing only the functions that are called by user when input
 void clear_screen() 
 {
@@ -102,6 +123,12 @@ void ben_dover()
     printf((uint8_t*)">", 0);  
 }
 
+void helper()
+{
+    printf((uint8_t*)"Write operation successful! \n",0);
+    printf((uint8_t*)">", 0);     
+}
+
 void shut_down() // test shut down - when qemu sits on specific port
 {
     Port32Bit qemu(0xf4);
@@ -112,7 +139,7 @@ void shut_down() // test shut down - when qemu sits on specific port
 
 void help_command() 
 {
-    printf((uint8_t*)"hello \n", 0);
+    printf(help, 0);
     printf((uint8_t*)">", 0); 
 }
 
@@ -158,19 +185,35 @@ void Write(uint8_t* file_name)
 {
     // User has used the write command
     // Activate global variable
+    initialize_write_buffer();
     write_state = 1;
-    printf((uint8_t*)"Before entering loop \n",0);
-    while (!newline_received)
+    newline_received = false;
+    printf((uint8_t*)"Please enter file data: \n",0);
+    while (1)
     {
-        Keyboard(nullptr);
+        // newline_received turns to true inside the Keyboard function when the user presses enter in write_state mode
+        Keyboard(&empty_struct);
+        if (newline_received) break;
     }
     // Now the user has used the enter key
     write_state = 0;
     newline_received = false;
-    Write_File(file_name,write_file_buffer, write_file_buffer_index + 1);
+
+
+    uint8_t sub_array[2000] = { (uint8_t)'\0' };
+    int count = 0;
+    for (int i = 0; i < 2000; i++)
+    {
+        if (write_file_buffer[i] != 0x0)
+        {
+            //if (write_file_buffer[i] == 0x0A) break;
+            sub_array[count] = write_file_buffer[i];
+            count++;
+        }
+    }
+
+    Write_File(file_name,sub_array, count);
     initialize_write_buffer();
-    printf((uint8_t*)"Write operation successful! \n",0);
-    printf((uint8_t*)">",0);
-    return;
+    helper();
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "../types.h"
+#define OUTPUT_BUFFER_FULL 0x01
 // this is the port communication part
 // in order to receive data from I/O devices it's necessary to speak to the ports that connect them to the computer
 // in reality, the cpu is connected to a PIC (programmable interrupt chip) and this PIC is connected to the physical devices - 8 specifically
@@ -24,6 +25,8 @@
         virtual void Write (uint8_t data); // write to the port
         // 8 bit port so the read and write are 8 bit
         virtual uint8_t Read();
+
+        bool HasData();
 
     };
 
@@ -57,3 +60,4 @@
         virtual uint32_t Read();
 
     };
+

@@ -37,6 +37,12 @@ uint8_t Port8Bit::Read()
     return result;
 }
 
+bool Port8Bit::HasData()
+{
+    uint8_t status = Read();
+    return (status & OUTPUT_BUFFER_FULL) != 0;
+}
+
 
 Port8BitSlow::Port8BitSlow(uint16_t portnumber)
 : Port8Bit(portnumber)

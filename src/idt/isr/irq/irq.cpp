@@ -7,15 +7,31 @@
 #define SCREEN_WIDTH 80
 
 Port8Bit keyboard_port((uint8_t)0x60);
+Port8Bit keyboard_status_port((uint8_t)0x64);
 extern uint64_t up_time; // Extern means we tell the compiler that the variable is defined somwhere else
 extern uint8_t x,y; // We define in kernel.cpp
 char command_buffer[MAX_COMMAND_LENGTH];
 extern int command_length;
 extern uint16_t* VideoMemory;
 void putchar(char c, int flag);
+
 int shift_pressed = 0;
-volatile bool newline_received = false;
+
+
+uint8_t write_file_buffer[2000] = { (uint8_t)'\0' };
+uint16_t write_file_buffer_index = 0;
+bool newline_received = false;
 int write_state = 0;
+
+void initialize_write_buffer()
+{
+    write_file_buffer_index = 0;
+    for (int i = 0; i < 2000; i++)
+    {
+        write_file_buffer[i] = (uint8_t)'\0';
+    }
+    return;
+}
 
 uint8_t scancode_to_ascii(uint8_t scancode, int shift_pressed) 
 {
@@ -38,9 +54,11 @@ uint8_t scancode_to_ascii(uint8_t scancode, int shift_pressed)
     };
 
     if (scancode < 128) {
-        if (shift_pressed) {
+        if (shift_pressed) 
+        {
             return scancode_table_shifted[scancode];
-        } else {
+        } else 
+        {
             return scancode_table[scancode];
         }
     }
@@ -50,6 +68,16 @@ uint8_t scancode_to_ascii(uint8_t scancode, int shift_pressed)
 
 void Keyboard(Registers* state) 
 {
+    if (write_state == 1)
+    {
+        while (1)
+        {
+            if (keyboard_status_port.HasData())
+            {
+                break;
+            }
+        }
+    }
     // Keyboard ISR
     uint8_t data = keyboard_port.Read();
 
@@ -68,7 +96,6 @@ void Keyboard(Registers* state)
     {
         // Convert scancode to ASCII
         data = scancode_to_ascii(data, shift_pressed);
-
         if (data == '\b') 
         {
             // Handle backspace
@@ -104,23 +131,28 @@ void Keyboard(Registers* state)
         } 
         else 
         {
+            
             if (write_state == 1)
             {
-                printf((uint8_t*)"Current data \n",0);
-                printf(&data,0);
                 // This is the state user is inputting data for the file that is creating
                 char buffer[2] = {static_cast<char>(data), '\0'};
                 printf((uint8_t*)buffer, 0); // Print character
-                write_file_buffer[write_file_buffer_index] = buffer[0];
+                
+                write_file_buffer[write_file_buffer_index] = data;
                 write_file_buffer_index++;
-                if (data == '\n') newline_received = true;
+                
+                if (data == '\n') {
+                    newline_received = true;
+                }
+                PIC_sendEOI(1); // Number of IRQ
+                return;
 
             }
             
             else
             {
                 char buffer[2] = {static_cast<char>(data), '\0'};
-                printf((uint8_t*)buffer, 1); // Print character
+                printf((uint8_t*)buffer, 1);
             }
         }
 

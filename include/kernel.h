@@ -24,7 +24,7 @@
 #define MAX_COMMANDS 10
 
 uint8_t* up_message = (uint8_t*)"Welcome to Fridkin OS! \nIf this is your first time using this project feel free to use the help command to learn about the operating system functionality! \n";
-uint8_t* help = (uint8_t*)"Fridkin os is an operating system project made by Yonathan Fridkin as YB project \nBelow is a list of useful commands:\n1.clear - to clean the screen completely";
+uint8_t* help = (uint8_t*)"Fridkin os is an operating system project made by Yonathan Fridkin as YB project \nBelow is a list of useful commands:\n1.clear - to clean the screen completely \n2. ls - use the ls command to list the existing files \n3. read - use read in conjunction with the file name to view it's contents (case sensitive) \n4. write - use write in conjunction with file name to create the file. After that enter it's data \n";
 
 extern uint8_t up_time;
 typedef void (*command_func_t)(void); // Pointer to a void function that takes no arguments
@@ -38,11 +38,12 @@ extern int command_length; // Indexer - point to the available element in buffer
 bool loop_flag = true;
 
 extern ata ata0m; // ATA PIO disk interface with the virtual hard drive created in run.sh
-extern int write_state; // Special variable to determine whether action taken in write to file 
 
-uint8_t write_file_buffer[2000];
-uint16_t write_file_buffer_index;
-extern volatile bool newline_received;
+// Define the variables here
+// uint8_t write_file_buffer[2000];
+// uint16_t write_file_buffer_index;
+// bool newline_received = false;
+// int write_state = 0;
 
 void clear_screen();
 void help_command();
@@ -70,7 +71,7 @@ typedef struct
 command_t all_commands[MAX_COMMANDS] = // List of all available commands
 {
     {(uint8_t*)"clear", clear_screen},
-    {(uint8_t*)"hello", help_command},
+    {(uint8_t*)"help", help_command},
     {(uint8_t*)"ben dover", ben_dover},
     {(uint8_t*)"shut down", shut_down},
     {(uint8_t*)"up time", printDecimal},
@@ -79,15 +80,15 @@ command_t all_commands[MAX_COMMANDS] = // List of all available commands
 };
 
 
-void initialize_write_buffer()
-{
-    write_file_buffer_index = 0;
-    for (int i = 0; i < 2000; i++)
-    {
-        write_file_buffer[i] = '\0';
-    }
-    return;
-}
+// void initialize_write_buffer()
+// {
+//     write_file_buffer_index = 0;
+//     for (int i = 0; i < 2000; i++)
+//     {
+//         write_file_buffer[i] = '\0';
+//     }
+//     return;
+// }
 
 void execute_command() // Called by putchar in case of \n from user. Go over the string stored in command buffer and figure out if it's valid command
 {
@@ -119,7 +120,7 @@ void execute_command() // Called by putchar in case of \n from user. Go over the
         Write(check_partial((uint8_t*)"write", (uint8_t*)command_buffer));
     }
 
-    if (!found) unknown_command();
+    if (found == 0) unknown_command();
 
     // Clear the command buffer
     command_length = 0;

@@ -17,4 +17,8 @@ extern uint8_t* up_message;
 void test_disk();
 void Write_File(uint8_t* name, uint8_t* data, uint32_t data_size);
 void printfHex16(uint16_t key);
+extern int write_state; // Special variable to determine whether action taken in write to file 
+extern uint8_t write_file_buffer[2000];
+extern uint16_t write_file_buffer_index;
+extern bool newline_received;
 void initialize_write_buffer();
