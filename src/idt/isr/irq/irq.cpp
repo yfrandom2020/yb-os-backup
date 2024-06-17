@@ -117,8 +117,16 @@ void Keyboard(Registers* state)
                     VideoMemory[y * SCREEN_WIDTH + x] = (WHITE_ON_BLACK << 8) | ' ';
                     if (write_state == 1)
                     {
+                        for (int i = 1999; i >= 0; i--)
+                        {
+                            if (write_file_buffer[i] != '\0')
+                            {
+                                write_file_buffer[i] = '\0';
+                                break;
+                            }
+                        }
                         write_file_buffer_index--;
-                        write_file_buffer[write_file_buffer_index] = '\0';
+                        //write_file_buffer[write_file_buffer_index] = '\0';
                     }
 
                     else

@@ -125,7 +125,7 @@ void ben_dover()
 
 void helper()
 {
-    printf((uint8_t*)"Write operation successful! \n",0);
+    //printf((uint8_t*)"Write operation successful! \n",0);
     printf((uint8_t*)">", 0);     
 }
 
